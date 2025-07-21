@@ -134,7 +134,9 @@
     textarea.addEventListener('input', () => {
       textarea.style.height = 'auto';
       const max = parseInt(getComputedStyle(textarea).lineHeight) * 15;
-      textarea.style.height = Math.min(textarea.scrollHeight, max) + 'px';
+      textarea.style.overflowY = textarea.scrollHeight > max ? 'scroll' : 'hidden';
+textarea.style.height = Math.min(textarea.scrollHeight, max) + 'px';
+
     });
 
     function append(sender, text, copy = false) {
