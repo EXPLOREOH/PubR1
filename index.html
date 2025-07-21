@@ -26,18 +26,32 @@
 <body>
   <header>Ruben AI</header>
   <div id="chat"></div>
-  <footer>
-    <textarea id="input" rows="1" placeholder="Type your message..."></textarea>
-    <select id="model">
+  <footer id="footer">
+  <textarea id="textInput" rows="1" placeholder="Type your message…"></textarea>
+
+  <div class="controls">
+    <!-- Toggle model list -->
+    <button id="toggleModel">M</button>
+
+    <!-- Model list (starts hidden) -->
+    <select id="model" class="model-hidden">
       <option value="gpt-4o">gpt‑4o</option>
       <option value="gpt-4">gpt‑4</option>
       <option value="gpt-4-mini">gpt‑4‑mini</option>
       <option value="gpt-4.1">gpt‑4.1</option>
       <option value="gpt-4.1-mini">gpt‑4.1‑mini</option>
     </select>
-    <input type="file" id="file">
-    <button id="send">Send</button>
-  </footer>
+
+    <!-- Slim file picker -->
+    <label class="file-btn">📎
+      <input type="file" id="fileInput" hidden />
+    </label>
+
+    <button id="sendBtn">Send</button>
+  </div>
+</footer>
+
+
 
   <script>
   const chat=document.getElementById('chat');
