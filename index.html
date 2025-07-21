@@ -1,58 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ruben AI</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --bg:#f5f1e6;--panel:#dedede;--header:#a12222;--text:#333;--copy-bg:#ffd800;
-    }
-    *{box-sizing:border-box;font-family:'Poppins',sans-serif;}
-    body{margin:0;height:100vh;display:flex;flex-direction:column;background:var(--bg);color:var(--text);}
-    header{background:var(--header);color:#fff;padding:1rem;font-size:1.5rem;font-weight:600;text-align:center;}
-    #chat{flex:1;overflow-y:auto;padding:1rem;white-space:pre-wrap;}
-    .message{margin-bottom:1rem;display:flex;align-items:flex-start;gap:.4rem;}
-    .user{font-weight:bold;}
-    .assistant{font-style:italic;}
-    .copy-btn{background:var(--copy-bg);border:none;border-radius:4px;padding:.15rem .4rem;font-weight:bold;cursor:pointer;}
-    footer{display:flex;align-items:flex-end;gap:.5rem;padding:.75rem;background:var(--panel);}
-    textarea{flex:1;font-size:1rem;padding:.5rem;border:1px solid #ccc;border-radius:4px;resize:none;overflow-y:hidden;line-height:1.5em;max-height:calc(1.5em*15);}
-    select,input[type=file],button{font-size:1rem;padding:.5rem;}
-    button{background:#ffc107;border:none;border-radius:4px;font-weight:bold;cursor:pointer;}
-  /* --- new controls styling --- */
-.controls              { display:flex; gap:.5rem; align-items:center; }
-#toggleModel           { padding:.25rem .55rem; font-weight:bold; }
-.model-hidden          { display:none; }
-.file-btn              { cursor:pointer; font-size:1.2rem; line-height:1; }
-.file-btn input        { display:none; }
-
-/* right‑align user messages */
-.message               { display:flex; gap:.4rem; margin-bottom:.8rem; }
-.user                  { justify-content:flex-end; text-align:right; }
-
-/* keep footer visible on mobile */
-#footer                { position:sticky; bottom:0; background:var(--panel); gap:.5rem; }
-@media (max-width:640px){
-  #footer  { flex-direction:column; }
-  .controls{ width:100%; justify-content:space-between; }
-  #textInput{ width:100%; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Ruben AI</title>
+<style>
+:root{
+ --bg:#f5f1e6;--panel:#e0e0e0;--header:#a12222;--text:#222;
+ --copy-bg:#ffd800;--accent:#ffc107;
 }
-
-  </style>
+body{margin:0;font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);
+ display:flex;flex-direction:column;height:100vh;}
+header{background:var(--header);color:#fff;padding:1rem;font-size:1.5rem;font-weight:600;text-align:center;}
+#chat{flex:1;overflow-y:auto;padding:1rem;white-space:pre-wrap;}
+.message{display:flex;gap:.4rem;margin-bottom:.8rem}
+.user{font-weight:600;margin-left:auto;text-align:right}
+.assistant{font-style:italic;}
+.copy-btn,.edit-btn{background:var(--copy-bg);border:none;border-radius:4px;
+ padding:.15rem .45rem;font-size:.75rem;font-weight:700;cursor:pointer;line-height:1}
+footer{position:sticky;bottom:0;background:var(--panel);padding:.75rem;display:flex;flex-direction:column;gap:.5rem}
+.controls{display:flex;gap:.5rem;align-items:center}
+#textInput{flex:1;padding:.5rem;font-size:1rem;resize:none;overflow-y:hidden;
+ line-height:1.5em;max-height:calc(1.5em*15);border:1px solid #ccc;border-radius:4px;width:100%}
+#toggleModel{font-weight:700;padding:.3rem .55rem}
+.model-hidden{display:none}
+.file-btn{cursor:pointer;font-size:1.2rem;line-height:1}
+.file-btn input{display:none}
+button,#model,input[type=file]{font-size:1rem;padding:.5rem}
+button{background:var(--accent);border:none;border-radius:4px;cursor:pointer;font-weight:700}
+@media(max-width:640px){
+ footer{gap:.5rem}
+ .controls{flex-wrap:wrap}
+}
+</style>
 </head>
 <body>
-  <header>Ruben AI</header>
-  <div id="chat"></div>
-  <footer id="footer">
+<header>Ruben AI</header>
+<div id="chat"></div>
+<footer id="footer">
   <textarea id="textInput" rows="1" placeholder="Type your message…"></textarea>
-
   <div class="controls">
-    <!-- Toggle model list -->
     <button id="toggleModel">M</button>
-
-    <!-- Model list (starts hidden) -->
     <select id="model" class="model-hidden">
       <option value="gpt-4o">gpt‑4o</option>
       <option value="gpt-4">gpt‑4</option>
@@ -60,77 +48,74 @@
       <option value="gpt-4.1">gpt‑4.1</option>
       <option value="gpt-4.1-mini">gpt‑4.1‑mini</option>
     </select>
-
-    <!-- Slim file picker -->
     <label class="file-btn">📎
-      <input type="file" id="fileInput" hidden />
+      <input type="file" id="fileInput" hidden>
     </label>
-
     <button id="sendBtn">Send</button>
   </div>
 </footer>
-
-
-
-  <script>
-  const chat=document.getElementById('chat');
-  const input=document.getElementById('input');
-  const model=document.getElementById('model');
-  const file=document.getElementById('file');
-  const send=document.getElementById('send');
-
-  input.addEventListener('input',()=>{
-    input.style.height='auto';
-    const max=parseInt(getComputedStyle(input).lineHeight)*15;
-    input.style.overflowY=input.scrollHeight>max?'scroll':'hidden';
-    input.style.height=Math.min(input.scrollHeight,max)+'px';
-  });
-
-  input.addEventListener('keydown',e=>{
-    if(e.key==='Enter'&&!e.shiftKey){
-      e.preventDefault();
-      send.click();
-    }
-  });
-
-  function append(sender,text,copy=false){
-    const div=document.createElement('div');
-    div.className='message '+(sender==='You'?'user':'assistant');
-    div.textContent=`${sender}: ${text}`;
-    if(copy){
-      const b=document.createElement('button');
-      b.className='copy-btn';b.textContent='C';
-      b.onclick=()=>navigator.clipboard.writeText(text);
-      div.appendChild(b);
-    }
-    chat.appendChild(div);
-    chat.scrollTop=chat.scrollHeight;
-  }
-
-  const fileToB64=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f);});
-
-  send.onclick=async()=>{
-    const prompt=input.value.trim();
-    if(!prompt&&!file.files[0])return;
-    append('You',prompt||'(file)');
-    input.value='';input.style.height='auto';
-    let textFile='',image='';
-    const f=file.files[0];
-    if(f){
-      if(f.type.startsWith('image/')){image=await fileToB64(f);}
-      else{textFile=await f.text();}
-      file.value='';
-    }
-    const body={prompt,model:model.value,textFile,image};
-    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    const data=await res.json();
-    append('Ruben',data.response||data.result||data.error||'[no reply]',true);
-  };
-  // show / hide model list
-const toggleBtn = document.getElementById('toggleModel');
+<script>
+const chatDiv   = document.getElementById('chat');
+const textInput = document.getElementById('textInput');
 const modelSel  = document.getElementById('model');
-toggleBtn.onclick = () => modelSel.classList.toggle('model-hidden');
+const fileInput = document.getElementById('fileInput');
+const sendBtn   = document.getElementById('sendBtn');
+document.getElementById('toggleModel').onclick=()=>modelSel.classList.toggle('model-hidden');
 
-  </script>
+// auto‑grow textarea
+textInput.addEventListener('input',()=>{
+ textInput.style.height='auto';
+ const max=parseInt(getComputedStyle(textInput).lineHeight)*15;
+ textInput.style.overflowY=textInput.scrollHeight>max?'scroll':'hidden';
+ textInput.style.height=Math.min(textInput.scrollHeight,max)+'px';
+});
+
+// Enter = send, Shift+Enter = newline
+textInput.addEventListener('keydown',e=>{
+ if(e.key==='Enter' && !e.shiftKey){
+   e.preventDefault();
+   sendBtn.click();
+ }
+});
+
+// helper: convert file to base64
+const fileToB64=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f);});
+
+// append message
+function append(sender,text,isAssistant=false){
+ const div=document.createElement('div');
+ div.className='message '+(isAssistant?'assistant':'user');
+ const span=document.createElement('span');
+ span.textContent=text;
+ div.appendChild(span);
+ if(isAssistant){
+   const c=document.createElement('button');
+   c.className='copy-btn';c.textContent='C';
+   c.onclick=()=>navigator.clipboard.writeText(text);
+   div.appendChild(c);
+ }
+ chatDiv.appendChild(div);
+ chatDiv.scrollTop=chatDiv.scrollHeight;
+}
+
+sendBtn.onclick=async()=>{
+ const prompt=textInput.value.trim();
+ const file=fileInput.files[0];
+ if(!prompt && !file) return;
+ append('You',prompt||'(file)');
+ textInput.value='';textInput.style.height='auto';
+ let textFile='',image='';
+ if(file){
+   if(file.type.startsWith('image/')){image=await fileToB64(file);}
+   else{textFile=await file.text();}
+   fileInput.value='';
+ }
+ const body={prompt,model:modelSel.value,textFile,image};
+ const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+ const data=await res.json();
+ const reply=data.response||data.result||data.error||'[no reply]';
+ append('Ruben',reply,true);
+};
+</script>
 </body>
 </html>
