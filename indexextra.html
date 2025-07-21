@@ -39,6 +39,18 @@
   .controls{ width:100%; justify-content:space-between; }
   #textInput{ width:100%; }
 }
+// auto‑grow up to 15 lines
+const maxLines  = 15;
+const line      = parseFloat(getComputedStyle(textInput).lineHeight) || 20;
+const maxHeight = line * maxLines;
+
+function autoGrow() {
+  textInput.style.height   = 'auto';
+  textInput.style.overflow = textInput.scrollHeight > maxHeight ? 'auto' : 'hidden';
+  textInput.style.height   = Math.min(textInput.scrollHeight, maxHeight) + 'px';
+}
+textInput.addEventListener('input', autoGrow);
+
 .copy-btn {
   max-height: 24px;  /* keeps one-line button */
 }
