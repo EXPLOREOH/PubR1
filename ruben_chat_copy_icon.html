@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ruben: Reasoning Layout</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f5f1e6;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      color: #333;
+    }
+
+    header {
+      padding: 1rem;
+      background-color: #a12222;
+      color: white;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+
+    #chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .message {
+      margin-bottom: 1rem;
+    }
+
+    .user { color: #a12222; font-weight: bold; }
+    .assistant { color: #333; }
+    .reasoning { font-style: italic; color: #555; }
+
+    #input-section {
+      border-top: 1px solid #ccc;
+      padding: 0.5rem 1rem;
+      background-color: #fff;
+    }
+
+    #advanced-settings {
+      display: none;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: vertical;
+      min-height: 3rem;
+      max-height: 6rem;
+    }
+
+    select, input[type="file"], input[type="text"] {
+      width: 100%;
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      background-color: #ffd800;
+      border: none;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #333;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+
+    button:hover {
+      background-color: #ba1c1c;
+      color: white;
+    }
+
+    #toggle-settings {
+      font-size: 0.9rem;
+      text-decoration: underline;
+      background: none;
+      border: none;
+      color: #555;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+    }
+  
+    .copy-btn {
+      display: inline-block;
+      margin-left: 0.5rem;
+      background-color: #ffd800;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #333;
+      cursor: pointer;
+      line-height: 1;
+      text-align: center;
+      padding: 0;
+    }
+
+    .copy-btn:hover {
+      background-color: #ba1c1c;
+      color: white;
+    }
+
+</style>
+</head>
+<body>
+
+  <header>Ruben</header>
+
+  <div id="chat-container"></div>
+
+  <div id="input-section">
+    <button id="toggle-settings" onclick="toggleSettings()">Show Settings</button>
+    <div id="advanced-settings">
+      <input type="text" id="apiKey" placeholder="API Key (sk-...)" />
+      <select id="model">
+        <option value="gpt-4">GPT-4 (o3 – reasoning)</option>
+        <option value="gpt-4o">GPT-4o</option>
+        <option value="gpt-4-0613">GPT-4 Mini (0613)</option>
+        <option value="gpt-4-1106-preview">GPT-4.1</option>
+        <option value="gpt-4-0125-preview">GPT-4.1 Mini (0125)</option>
+      </select>
+      <input type="file" id="fileInput" accept=".txt,.md,.csv,image/*" />
+    </div>
+
+    <textarea id="prompt" rows="4" placeholder="Type your message..."></textarea>
+    <button onclick="sendToGPT()">Send</button>
+  </div>
+
+  <script>
+    let conversation = [];
+
+    function toggleSettings() {
+      const settings = document.getElementById('advanced-settings');
+      const toggle = document.getElementById('toggle-settings');
+      if (settings.style.display === 'none') {
+        settings.style.display = 'flex';
+        toggle.innerText = "Hide Settings";
+      } else {
+        settings.style.display = 'none';
+        toggle.innerText = "Show Settings";
+      }
+    }
+
+    document.getElementById('prompt').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendToGPT();
+      }
+    });
+
+    async function sendToGPT() {
+      const apiKey = document.getElementById('apiKey').value.trim();
+      const model = document.getElementById('model').value;
+      const promptInput = document.getElementById('prompt');
+      const prompt = promptInput.value.trim();
+      const file = document.getElementById('fileInput').files[0];
+      const chatContainer = document.getElementById('chat-container');
+
+      if (!apiKey || !prompt) {
+        alert('API key and prompt are required.');
+        return;
+      }
+
+      let userMessage = { role: "user", content: prompt };
+      let messages = [...conversation, userMessage];
+
+      if (file) {
+        if (file.type.startsWith("image/")) {
+          const reader = new FileReader();
+          reader.onload = async () => {
+            const base64Image = reader.result.split(',')[1];
+            userMessage = {
+              role: "user",
+              content: [
+                { type: "text", text: prompt },
+                { type: "image_url", image_url: { url: `data:${file.type};base64,${base64Image}` } }
+              ]
+            };
+            messages = [...conversation, userMessage];
+            await makeApiCall(apiKey, model, messages, userMessage);
+          };
+          reader.readAsDataURL(file);
+          return;
+        } else {
+          const text = await file.text();
+          userMessage.content += `\n\n---\n\n${text}`;
+          messages = [...conversation, userMessage];
+        }
+      }
+
+      await makeApiCall(apiKey, model, messages, userMessage);
+      promptInput.value = '';
+    }
+
+    async function makeApiCall(apiKey, model, messages, userMessage) {
+      const chatContainer = document.getElementById('chat-container');
+      const body = {
+        model: model,
+        messages: messages,
+        temperature: 0.7
+      };
+
+      // Simulate reasoning output (basic version)
+      const reasoningDiv = document.createElement('div');
+      reasoningDiv.className = 'message reasoning';
+      reasoningDiv.innerText = 'Thinking...';
+      chatContainer.appendChild(reasoningDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok) {
+        const error = await res.text();
+        chatContainer.innerHTML += `<div class="message assistant"><em>Error: ${res.status} - ${error}</em></div>`;
+        return;
+      }
+
+      const data = await res.json();
+      const reply = data.choices?.[0]?.message?.content || "(No reply)";
+
+      // Update conversation and render full chat
+      conversation.push(userMessage);
+      conversation.push({ role: "assistant", content: reply });
+
+      chatContainer.innerHTML = '';
+      conversation.forEach(msg => {
+        const cls = msg.role === 'user' ? 'user' : 'assistant';
+        
+    if (msg.role === 'assistant') {
+      const encoded = encodeURIComponent(msg.content);
+      chatContainer.innerHTML += `<div class="message"><span class="${cls}">${msg.role}:</span> ${msg.content}
+        <br><button class="copy-btn" onclick="copyToClipboard(decodeURIComponent('${encoded}'))">C</button></div>`;
+    } else {
+      chatContainer.innerHTML += `<div class="message"><span class="${cls}">${msg.role}:</span> ${msg.content}</div>`;
+    }
+    
+      });
+
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Copied to clipboard!");
+      }).catch(err => {
+        alert("Failed to copy: " + err);
+      });
+    }
+</script>
+
+</body>
+</html>
