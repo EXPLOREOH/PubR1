@@ -1,13 +1,137 @@
-const response = await fetch('/api/chat', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    prompt: userInput,
-    model: selectedModel // optional
-  })
-});
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ruben: Reasoning Layout</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f5f1e6;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      color: #333;
+    }
+    header {
+      padding: 1rem;
+      background-color: #a12222;
+      color: white;
+      font-weight: bold;
+      font-size: 1.4rem;
+      text-align: center;
+    }
+    main {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+    #chat {
+      white-space: pre-wrap;
+      margin-bottom: 1rem;
+    }
+    footer {
+      padding: 1rem;
+      background: #ddd;
+      display: flex;
+      gap: 0.5rem;
+    }
+    input, select {
+      padding: 0.5rem;
+      font-size: 1rem;
+      flex: 1;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      background-color: #f2c700;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #settings {
+      display: none;
+      padding: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <header>Ruben</header>
+  <main>
+    <div id="chat"></div>
+    <div><a href="#" onclick="toggleSettings()">Show Settings</a></div>
+    <div id="settings">
+      <label>Model:
+        <select id="model">
+          <option value="gpt-4o">gpt-4o</option>
+          <option value="gpt-4">gpt-4</option>
+          <option value="gpt-4-turbo">gpt-4-turbo</option>
+          <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+        </select>
+      </label>
+      <br />
+      <label>API Key:
+        <input type="password" id="apiKey" placeholder="Only needed on GitHub Pages" />
+      </label>
+    </div>
+  </main>
+  <footer>
+    <input type="text" id="prompt" placeholder="Type your message..." />
+    <button onclick="sendMessage()">Send</button>
+  </footer>
 
-const data = await response.json();
-if (data.error) {
-  throw new Error(data.error);
-}
+  <script>
+    function toggleSettings() {
+      const el = document.getElementById("settings");
+      el.style.display = el.style.display === "none" ? "block" : "none";
+    }
+
+    async function sendMessage() {
+      const prompt = document.getElementById("prompt").value;
+      const model = document.getElementById("model").value;
+      const apiKey = document.getElementById("apiKey").value;
+      const chat = document.getElementById("chat");
+
+      if (!prompt) return alert("Enter a prompt.");
+      chat.innerHTML += `\nÌ†ΩÌø° You: ${prompt}\n`;
+
+      try {
+        let response, data;
+
+        if (location.hostname.includes("vercel.app")) {
+          response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt, model })
+          });
+        } else {
+          if (!apiKey) return alert("API key required.");
+          response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+              model,
+              messages: [{ role: "user", content: prompt }]
+            })
+          });
+        }
+
+        data = await response.json();
+        if (data.error) throw new Error(data.error.message || data.error);
+
+        const result = data.choices?.[0]?.message?.content || "[No reply]";
+        chat.innerHTML += `Ì†æÌ∑† Ruben: ${result}\n`;
+        document.getElementById("prompt").value = "";
+
+      } catch (err) {
+        chat.innerHTML += `‚ö†Ô∏è Error: ${err.message}\n`;
+      }
+    }
+  </script>
+</body>
+</html>
