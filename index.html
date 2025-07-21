@@ -21,6 +21,25 @@
     textarea{flex:1;font-size:1rem;padding:.5rem;border:1px solid #ccc;border-radius:4px;resize:none;overflow-y:hidden;line-height:1.5em;max-height:calc(1.5em*15);}
     select,input[type=file],button{font-size:1rem;padding:.5rem;}
     button{background:#ffc107;border:none;border-radius:4px;font-weight:bold;cursor:pointer;}
+  /* --- new controls styling --- */
+.controls              { display:flex; gap:.5rem; align-items:center; }
+#toggleModel           { padding:.25rem .55rem; font-weight:bold; }
+.model-hidden          { display:none; }
+.file-btn              { cursor:pointer; font-size:1.2rem; line-height:1; }
+.file-btn input        { display:none; }
+
+/* right‑align user messages */
+.message               { display:flex; gap:.4rem; margin-bottom:.8rem; }
+.user                  { justify-content:flex-end; text-align:right; }
+
+/* keep footer visible on mobile */
+#footer                { position:sticky; bottom:0; background:var(--panel); gap:.5rem; }
+@media (max-width:640px){
+  #footer  { flex-direction:column; }
+  .controls{ width:100%; justify-content:space-between; }
+  #textInput{ width:100%; }
+}
+
   </style>
 </head>
 <body>
@@ -107,6 +126,11 @@
     const data=await res.json();
     append('Ruben',data.response||data.result||data.error||'[no reply]',true);
   };
+  // show / hide model list
+const toggleBtn = document.getElementById('toggleModel');
+const modelSel  = document.getElementById('model');
+toggleBtn.onclick = () => modelSel.classList.toggle('model-hidden');
+
   </script>
 </body>
 </html>
