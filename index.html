@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ruben: Reasoning Layout</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
   <style>
@@ -16,6 +16,7 @@
       height: 100vh;
       color: #333;
     }
+
     header {
       padding: 1rem;
       background-color: #a12222;
@@ -23,104 +24,101 @@
       text-align: center;
       font-size: 1.5rem;
     }
-    #settings {
-      display: none;
-      padding: 1rem;
-      background: #eee;
-    }
+
     #chat {
       flex: 1;
       padding: 1rem;
       overflow-y: auto;
+      background-color: #eee;
     }
-    #input-area {
+
+    #form {
       display: flex;
       padding: 1rem;
-      background: #ddd;
+      background-color: #ddd;
     }
-    textarea {
+
+    #userInput {
       flex: 1;
       padding: 0.5rem;
+      font-size: 1rem;
     }
+
     button {
-      margin-left: 1rem;
-      padding: 0.5rem 1rem;
-      background: #ffcc00;
+      background-color: gold;
       border: none;
+      padding: 0.5rem 1rem;
       cursor: pointer;
     }
-    .message {
-      margin: 0.5rem 0;
+
+    #settings {
+      padding: 0.5rem 1rem;
+      font-size: 0.8rem;
+      display: none;
     }
-    .user { font-weight: bold; }
-    .assistant { font-style: italic; }
   </style>
 </head>
 <body>
   <header>Ruben</header>
-  
+
+  <div id="chat"></div>
+
+  <form id="form">
+    <input id="userInput" type="text" placeholder="Type your message..." />
+    <button type="submit">Send</button>
+  </form>
+
   <div id="settings">
-    <label>
-      Model:
-      <select id="model">
-        <option value="gpt-4">gpt-4</option>
+    <label>API Key: <input type="text" id="apiKey" /></label><br>
+    <label>Model:
+      <select id="modelSelect">
         <option value="gpt-4o">gpt-4o</option>
-        <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+        <option value="gpt-4">gpt-4</option>
+        <option value="gpt-4-1106-preview">gpt-4-mini</option>
       </select>
     </label>
   </div>
 
-  <div id="chat"></div>
-
-  <div id="input-area">
-    <textarea id="input" rows="2" placeholder="Type your message..."></textarea>
-    <button onclick="sendMessage()">Send</button>
-  </div>
-
   <script>
-    async function sendMessage() {
-      const prompt = document.getElementById('input').value.trim();
-      const model = document.getElementById('model').value;
+    const chat = document.getElementById('chat');
+    const form = document.getElementById('form');
+    const input = document.getElementById('userInput');
+    const keyInput = document.getElementById('apiKey');
+    const modelSelect = document.getElementById('modelSelect');
 
-      if (!prompt) {
-        alert('Prompt required.');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const prompt = input.value;
+      const apiKey = keyInput.value;
+      const model = modelSelect.value;
+
+      if (!apiKey || !prompt) {
+        alert('API key and prompt are required.');
         return;
       }
 
-      const chatDiv = document.getElementById('chat');
-      const userMessage = document.createElement('div');
-      userMessage.className = 'message user';
-      userMessage.innerText = "You: " + prompt;
-      chatDiv.appendChild(userMessage);
+      appendMessage('You', prompt);
+      input.value = '';
 
-      document.getElementById('input').value = '';
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, apiKey, model })
+      });
 
-      try {
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, model })
-        });
-
-        const data = await response.json();
-
-        if (data.error) {
-          throw new Error(data.error);
-        }
-
-        const aiReply = data.choices[0].message.content;
-
-        const assistantMessage = document.createElement('div');
-        assistantMessage.className = 'message assistant';
-        assistantMessage.innerText = "Ruben: " + aiReply;
-        chatDiv.appendChild(assistantMessage);
-        chatDiv.scrollTop = chatDiv.scrollHeight;
-      } catch (err) {
-        const errorMessage = document.createElement('div');
-        errorMessage.className = 'message assistant';
-        errorMessage.innerText = "Error: " + err.message;
-        chatDiv.appendChild(errorMessage);
+      const data = await response.json();
+      if (data.error) {
+        alert('Error: ' + data.error);
+        return;
       }
+
+      appendMessage('AI', data.response);
+    });
+
+    function appendMessage(sender, text) {
+      const message = document.createElement('div');
+      message.innerHTML = `<strong>${sender}:</strong> ${text}`;
+      chat.appendChild(message);
     }
   </script>
 </body>
