@@ -9,15 +9,19 @@
   <style>
   :root {
     --bg: #f5f1e6;
-    --panel: #ddd;
+    --panel: #e0e0e0;
     --header: #a12222;
-    --text: #333;
+    --text: #222;
     --copy-bg: #ffd800;
+  }
+
+  * {
+    box-sizing: border-box;
   }
 
   body {
     margin: 0;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Segoe UI', sans-serif;
     background: var(--bg);
     color: var(--text);
     display: flex;
@@ -27,10 +31,11 @@
 
   header {
     background: var(--header);
-    color: #fff;
+    color: white;
     padding: 1rem;
-    text-align: center;
     font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
   }
 
   #chat {
@@ -43,8 +48,8 @@
   .message {
     margin-bottom: 1rem;
     display: flex;
-    align-items: center;
-    gap: 0.5em;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
 
   .user {
@@ -55,51 +60,55 @@
     font-style: italic;
   }
 
-  .copy-btn {
+  .copy-btn, .edit-btn {
     background: var(--copy-bg);
     border: none;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
+    border-radius: 4px;
+    padding: 0.2rem 0.5rem;
+    cursor: pointer;
+    font-size: 0.8rem;
     font-weight: bold;
-    cursor: pointer;
-    text-align: center;
-    color: black;
-  }
-
-  .edit-btn {
-    background: none;
-    border: none;
-    font-size: 1em;
-    color: var(--text);
-    cursor: pointer;
   }
 
   #form {
     display: flex;
-    gap: 0.5rem;
-    padding: 1rem;
-    background: var(--panel);
     align-items: flex-end;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--panel);
   }
 
   textarea {
     flex: 1;
-    padding: 0.6rem;
+    padding: 0.5rem;
     font-size: 1rem;
     resize: none;
-    overflow-y: hidden;
+    overflow-y: auto;
     width: 100%;
     line-height: 1.5em;
     max-height: calc(1.5em * 15);
+    border-radius: 4px;
+    border: 1px solid #ccc;
+  }
+
+  select, button, input[type="file"] {
+    font-size: 1rem;
+    padding: 0.5rem;
   }
 
   button {
-    padding: 0.6rem 1rem;
     font-weight: bold;
+    background: #ffc107;
+    border: none;
+    border-radius: 4px;
     cursor: pointer;
   }
+
+  input[type="file"] {
+    flex-shrink: 1;
+  }
 </style>
+
 
 </head>
 <body>
@@ -107,11 +116,13 @@
   <div id="chat"></div>
   <form id="form">
     <textarea id="userInput" rows="1" placeholder="Type your message…"></textarea>
-    <select id="modelSelect">
-      <option value="gpt-4o">gpt‑4o</option>
-      <option value="gpt-4">gpt‑4</option>
-      <option value="gpt-4-1106-preview">gpt‑4‑mini</option>
-    </select>
+   <select id="model">
+  <option value="gpt-4o">gpt-4o</option>
+  <option value="gpt-4">gpt-4</option>
+  <option value="gpt-4-mini">gpt-4-mini</option>
+  <option value="gpt-4.1">gpt-4.1</option>
+  <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+</select>
     <input type="file" id="fileInput" accept=".txt,.md,.csv,image/*">
     <button type="submit">Send</button>
   </form>
@@ -133,6 +144,15 @@
 textarea.style.height = Math.min(textarea.scrollHeight, max) + 'px';
 
     });
+    
+    const textarea = document.getElementById('input');
+textarea.addEventListener('input', () => {
+  textarea.style.height = 'auto';
+  const max = parseInt(getComputedStyle(textarea).lineHeight) * 15;
+  textarea.style.overflowY = textarea.scrollHeight > max ? 'scroll' : 'hidden';
+  textarea.style.height = Math.min(textarea.scrollHeight, max) + 'px';
+});
+
 
     function append(sender, text, copy = false) {
       const div = document.createElement('div');
