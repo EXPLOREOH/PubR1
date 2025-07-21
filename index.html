@@ -196,6 +196,13 @@
       const data = await res.json();
       append('Ruben', data.response || data.error || '[no reply]', true);
     });
+// Handle Enter to submit and Shift+Enter for new lines
+textarea.addEventListener('keydown', function (e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();  // prevent newline
+    form.dispatchEvent(new Event('submit', { cancelable: true }));
+  }
+});
   </script>
 </body>
 </html>
